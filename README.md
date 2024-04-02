@@ -3,7 +3,7 @@
 <div align="center">
   <div>&nbsp;</div>
   <img src="resources/1-myshell-mit.png" width="500"/> 
-  <img src="resources/2-performance.png" width="500"/> 
+  <img src="resources/2-performance.png" width="530"/> 
 </div>
 
 ## Key Messages
