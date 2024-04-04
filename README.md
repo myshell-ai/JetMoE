@@ -8,7 +8,7 @@
 
 ## Key Messages
 
-1. JetMoE-8B is **trained with less than $ 0.1 million**<sup>1</sup> **cost but outperforms LLaMA2-7B from Meta AI**, who has multi-billion-dollar training resources. LLM training can be **much cheaper than people generally thought**.
+1. JetMoE-8B is **trained with less than $ 0.1 million**<sup>1</sup> **cost but outperforms LLaMA2-7B from Meta AI**, who has multi-billion-dollar training resources. LLM training can be **much cheaper than people previously thought**.
 
 2. JetMoE-8B is **fully open-sourced and academia-friendly** because:
     - It **only uses public datasets** for training, and the code is open-sourced. No proprietary resource is needed.
