@@ -5,8 +5,8 @@ import torch.nn.functional as F
 class top_k_gating(nn.Module):
     def __init__(
         self,
-        input_size, 
-        num_experts, 
+        input_size,
+        num_experts,
         top_k,
     ):
         """
@@ -36,8 +36,7 @@ class top_k_gating(nn.Module):
         """
         Return extra representation string for the module.
         """
-        return 'k={}, num_experts={}'.format(
-            self.top_k, self.num_experts)
+        return "k={}, num_experts={}".format(self.top_k, self.num_experts)
 
     def compute_aux_loss(self, probs, logits, gates):
         """
@@ -54,10 +53,7 @@ class top_k_gating(nn.Module):
         freq = (gates > 0).float().sum(0)
         lsesq = (torch.log(torch.exp(logits).sum(dim=-1)) ** 2).sum()
 
-        switchloss =  self.num_experts * (
-            F.normalize(probs, p=1, dim=0) *
-            F.normalize(freq, p=1, dim=0)
-        ).sum()
+        switchloss = self.num_experts * (F.normalize(probs, p=1, dim=0) * F.normalize(freq, p=1, dim=0)).sum()
         zloss = lsesq / count
         loss = switchloss + 0.1 * zloss
 

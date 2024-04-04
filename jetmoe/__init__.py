@@ -1,4 +1,4 @@
-# Copyright 2023 Salesforce authors, The EleutherAI, and HuggingFace Teams. All rights reserved.
+# Copyright 2024 JetMoE AI and The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ from transformers.utils import OptionalDependencyNotAvailable, _LazyModule, is_t
 
 
 _import_structure = {
-    "configuration_jetmoe": ["JETMOE_PRETRAINED_CONFIG_ARCHIVE_MAP", "JetMoEConfig", "JetMoEOnnxConfig"],
+    "configuration_jetmoe": ["JETMOE_PRETRAINED_CONFIG_ARCHIVE_MAP", "JetMoEConfig"],
 }
+
 
 try:
     if not is_torch_available():
@@ -27,7 +28,6 @@ except OptionalDependencyNotAvailable:
     pass
 else:
     _import_structure["modeling_jetmoe"] = [
-        "JETMOE_PRETRAINED_MODEL_ARCHIVE_LIST",
         "JetMoEForCausalLM",
         "JetMoEModel",
         "JetMoEPreTrainedModel",
@@ -35,7 +35,7 @@ else:
     ]
 
 if TYPE_CHECKING:
-    from .configuration_jetmoe import JETMOE_PRETRAINED_CONFIG_ARCHIVE_MAP, JetMoEConfig, JetMoEOnnxConfig
+    from .configuration_jetmoe import JETMOE_PRETRAINED_CONFIG_ARCHIVE_MAP, JetMoEConfig
 
     try:
         if not is_torch_available():
@@ -44,11 +44,10 @@ if TYPE_CHECKING:
         pass
     else:
         from .modeling_jetmoe import (
-            JETMOE_PRETRAINED_MODEL_ARCHIVE_LIST,
             JetMoEForCausalLM,
+            JetMoEForSequenceClassification,
             JetMoEModel,
             JetMoEPreTrainedModel,
-            JetMoEForSequenceClassification,
         )
 
 else:

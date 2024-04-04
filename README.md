@@ -75,7 +75,6 @@ AutoModelForSequenceClassification.register(JetMoEConfig, JetMoEForSequenceClass
 tokenizer = AutoTokenizer.from_pretrained('jetmoe/jetmoe-8b')
 model = AutoModelForCausalLM.from_pretrained('jetmoe/jetmoe-8b')
 ```
-The MoE code is based on the [ScatterMoE](https://github.com/shawntan/scattermoe). The code is still under active development, we are happy to receive any feedback or suggestions.
 
 ## Model Details
 Please refer to [https://research.myshell.ai/jetmoe](https://research.myshell.ai/jetmoe) for model details and training details. We will also release the **technical report** soon.
