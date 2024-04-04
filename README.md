@@ -19,6 +19,7 @@
 <sup>1</sup> We used a 96×H100 GPU cluster for 2 weeks, which cost ~$0.08 million.
 
 HuggingFace: [https://huggingface.co/jetmoe/jetmoe-8b](https://huggingface.co/jetmoe/jetmoe-8b)
+
 Online Demo on Lepton AI: [https://www.lepton.ai/playground/chat?model=jetmoe-8b-chat](https://www.lepton.ai/playground/chat?model=jetmoe-8b-chat)
 
 ## Authors
