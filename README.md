@@ -79,7 +79,7 @@ model = AutoModelForCausalLM.from_pretrained('jetmoe/jetmoe-8b')
 ```
 
 ## Model Details
-Please refer to [https://research.myshell.ai/jetmoe](https://research.myshell.ai/jetmoe) for model details and training details. We will also release the **technical report** soon.
+Please refer to the technical report [https://arxiv.org/pdf/2404.07413.pdf](https://arxiv.org/pdf/2404.07413.pdf) for model details and training details.
 
 ## Acknowledgement
 We express our gratitude to [Shengding Hu](https://shengdinghu.github.io/) for his valuable advice on the Phase 2 data mixture. We also express our gratitude to [Exabits](https://www.exabits.ai/) for their assistance in setting up the GPU clusters.
