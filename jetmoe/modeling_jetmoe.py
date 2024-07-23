@@ -2,7 +2,7 @@
 # Copyright 2024 JetMoE AI and the HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
+# You may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
@@ -16,7 +16,7 @@
 
 import math
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 
 import torch
 import torch.utils.checkpoint
@@ -90,6 +90,8 @@ class JetMoEBaseModelOutputWithPast(BaseModelOutputWithPast):
 
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
+        ranked_attn (`List[Dict[int, float]]`, *optional*, returned when `output_attentions=True` is passed or when `config.output_attentions=True`):
+            List of dictionaries containing the token index as key and their overall score as value.
     """
 
     last_hidden_state: torch.FloatTensor = None
@@ -97,6 +99,7 @@ class JetMoEBaseModelOutputWithPast(BaseModelOutputWithPast):
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
     aux_loss: Optional[torch.FloatTensor] = None
+    ranked_attn: Optional[List[Dict[int, float]]] = None
 
 
 @dataclass
@@ -126,6 +129,8 @@ class JetMoECausalLMOutputWithPast(CausalLMOutputWithPast):
 
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
+        ranked_attn (`List[Dict[int, float]]`, *optional*, returned when `output_attentions=True` is passed or when `config.output_attentions=True`):
+            List of dictionaries containing the token index as key and their overall score as value.
     """
 
     loss: Optional[torch.FloatTensor] = None
@@ -134,6 +139,7 @@ class JetMoECausalLMOutputWithPast(CausalLMOutputWithPast):
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
     aux_loss: Optional[torch.FloatTensor] = None
+    ranked_attn: Optional[List[Dict[int, float]]] = None
 
 
 @dataclass
@@ -163,6 +169,8 @@ class JetMoESequenceClassifierOutputWithPast(SequenceClassifierOutputWithPast):
 
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
+        ranked_attn (`List[Dict[int, float]]`, *optional*, returned when `output_attentions=True` is passed or when `config.output_attentions=True`):
+            List of dictionaries containing the token index as key and their overall score as value.
     """
 
     loss: Optional[torch.FloatTensor] = None
@@ -171,6 +179,7 @@ class JetMoESequenceClassifierOutputWithPast(SequenceClassifierOutputWithPast):
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
     aux_loss: Optional[torch.FloatTensor] = None
+    ranked_attn: Optional[List[Dict[int, float]]] = None
 
 
 # Copied from transformers.models.llama.modeling_llama._get_unpad_data
@@ -336,7 +345,7 @@ class JetMoEAttention(nn.Module):
         output_attentions: bool = False,
         use_cache: bool = False,
         **kwargs,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]], Optional[Dict[int, float]]]:
         if "padding_mask" in kwargs:
             warnings.warn(
                 "Passing `padding_mask` is deprecated and will be removed in v4.37. Please make sure use `attention_mask` instead.`"
@@ -413,10 +422,17 @@ class JetMoEAttention(nn.Module):
         attn_output = self.experts.reduce(attn_output)
         attn_output = attn_output.view(bsz, q_len, -1)
 
+        # Calculate mean attention scores across heads and sum them for each token
+        if output_attentions:
+            mean_attn_scores = attn_weights.mean(dim=1)  # Shape: (bsz, q_len, kv_seq_len)
+            ranked_attn = {i: mean_attn_scores[:, i].sum().item() for i in range(q_len)}
+
         if not output_attentions:
             attn_weights = None
+            ranked_attn = None
 
-        return attn_output, attn_weights, past_key_value, aux_loss
+        print("End of JetMoEAttention")
+        return attn_output, attn_weights, past_key_value, ranked_attn
 
 
 # copied from transformers.models.llama.modeling_llama.LlamaSdpaAttention with Llama->JetMoE
@@ -436,7 +452,7 @@ class JetMoESdpaAttention(JetMoEAttention):
         past_key_value: Optional[Cache] = None,
         output_attentions: bool = False,
         use_cache: bool = False,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]], Optional[Dict[int, float]]]:
         if output_attentions:
             # TODO: Improve this warning with e.g. `model.config.attn_implementation = "manual"` once this is implemented.
             logger.warning_once(
@@ -511,8 +527,8 @@ class JetMoESdpaAttention(JetMoEAttention):
 
         attn_output = self.experts.reduce(attn_output)
         attn_output = attn_output.view(bsz, q_len, -1)
-
-        return attn_output, None, past_key_value, aux_loss
+        print("End of SDPA JetMoEAttention")
+        return attn_output, None, past_key_value, None
 
 
 class JetMoEFlashAttention2(JetMoEAttention):
@@ -607,8 +623,8 @@ class JetMoEFlashAttention2(JetMoEAttention):
 
         if not output_attentions:
             attn_weights = None
-
-        return y, attn_weights, past_key_value, aux_loss
+        print("End of Flash_attn JetMoEAttention")
+        return y, attn_weights, past_key_value, None
 
     def _flash_attention_forward(
         self,
@@ -771,7 +787,7 @@ class JetMoEBlock(nn.Module):
             Tuple containing outputs or optional attention weights.
         """
         # Self Attention
-        attn_output, self_attn_weights, present_key_value, att_aux_loss = self.self_attention(
+        attn_output, self_attn_weights, present_key_value, att_aux_loss, ranked_attn = self.self_attention(
             hidden_states=self.input_layernorm(hidden_states),
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -788,12 +804,13 @@ class JetMoEBlock(nn.Module):
 
         if output_attentions:
             outputs += (self_attn_weights,)
+            outputs += (ranked_attn,)
 
         if use_cache:
             outputs += (present_key_value,)
 
         outputs += (att_aux_loss + mlp_aux_loss,)
-
+        print("End of JetMoEBlock")
         return outputs
 
 
@@ -1063,6 +1080,7 @@ class JetMoEModel(JetMoEPreTrainedModel):
         # decoder layers
         all_hidden_states = () if output_hidden_states else None
         all_self_attns = () if output_attentions else None
+        all_ranked_attns = () if output_attentions else None
         next_decoder_cache = None
 
         aux_loss = 0
@@ -1106,6 +1124,7 @@ class JetMoEModel(JetMoEPreTrainedModel):
 
             if output_attentions:
                 all_self_attns += (layer_outputs[1],)
+                all_ranked_attns += (layer_outputs[2],)
 
             aux_loss += layer_outputs[-1]
 
@@ -1118,15 +1137,16 @@ class JetMoEModel(JetMoEPreTrainedModel):
         next_cache = None
         if use_cache:
             next_cache = next_decoder_cache.to_legacy_cache() if use_legacy_cache else next_decoder_cache
-
+        print("End of JetMoEModel")
         if not return_dict:
-            return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns] if v is not None)
+            return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns, all_ranked_attns] if v is not None)
         return JetMoEBaseModelOutputWithPast(
             last_hidden_state=hidden_states,
             past_key_values=next_cache,
             hidden_states=all_hidden_states,
             attentions=all_self_attns,
             aux_loss=aux_loss,
+            ranked_attn=all_ranked_attns,
         )
 
 
@@ -1229,7 +1249,7 @@ class JetMoEForCausalLM(JetMoEPreTrainedModel):
 
         if labels is not None and self.model.training:
             loss += self.aux_loss_coef * outputs.aux_loss.to(loss.device)
-
+        print("End of JetMoEForCasualLM")
         return JetMoECausalLMOutputWithPast(
             loss=loss,
             logits=logits,
@@ -1237,6 +1257,7 @@ class JetMoEForCausalLM(JetMoEPreTrainedModel):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
             aux_loss=outputs.aux_loss,
+            ranked_attn=outputs.ranked_attn,
         )
 
     def prepare_inputs_for_generation(
@@ -1420,11 +1441,12 @@ class JetMoEForSequenceClassification(JetMoEPreTrainedModel):
         if not return_dict:
             output = (pooled_logits,) + transformer_outputs[1:]
             return ((loss,) + output) if loss is not None else output
-
+        print("End of JetMoEForSequence..")
         return SequenceClassifierOutputWithPast(
             loss=loss,
             logits=pooled_logits,
             past_key_values=transformer_outputs.past_key_values,
             hidden_states=transformer_outputs.hidden_states,
             attentions=transformer_outputs.attentions,
+            ranked_attn=transformer_outputs.ranked_attn,
         )
