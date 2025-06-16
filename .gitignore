@@ -1,3 +1,46 @@
 *.pyc
 *.egg-info
 build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.tox/
+.nox/
+
+# Claude
+.claude/*
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Distribution / packaging
+dist/
+*.egg
+.eggs/
+*.whl
+
+# Cache
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log

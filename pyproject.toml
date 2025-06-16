@@ -1,0 +1,81 @@
+[tool.poetry]
+name = "jetmoe"
+version = "0.1.0"
+description = "JetMoE: Reaching LLaMA2 Performance with 0.1M Dollars"
+authors = ["JetMoE Team"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://research.myshell.ai/jetmoe"
+repository = "https://github.com/myshell-ai/JetMoE"
+packages = [{include = "jetmoe"}]
+
+[tool.poetry.dependencies]
+python = "^3.10.10"
+torch = "^2.0.0"
+transformers = "^4.30.0"
+scattermoe = {git = "https://github.com/shawntan/scattermoe.git", branch = "main"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.11.1"
+
+[tool.poetry.scripts]
+test = "pytest:main"
+tests = "pytest:main"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--cov=jetmoe",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=0",  # Set to 80 once you have actual tests
+    "-v"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests"
+]
+
+[tool.coverage.run]
+source = ["jetmoe"]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "*/conftest.py",
+    "setup.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "pass"
+]
+precision = 2
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
